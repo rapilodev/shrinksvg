@@ -1,0 +1,2 @@
+# shrinksvg
+reduce SVG size
