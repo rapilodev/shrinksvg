@@ -1,8 +1,12 @@
 # shrinksvg
 reduce SVG size
 
-This Perl script optimizes SVG files.
+This Perl script optimizes SVG files by reducing precision.
 It minimizes the file size while preserving the visual integrity of the SVG.
+
+## Features
+
+- **Precision Reduction**: Adjusts the precision of coordinates based on the size of the SVG.
 
 ## Usage
 

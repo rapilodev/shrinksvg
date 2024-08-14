@@ -7,6 +7,40 @@ my $input_svg = do {local $/; <STDIN>};
 my $parser = XML::LibXML->new();
 my $doc = $parser->parse_string($input_svg);
 my $root = $doc->documentElement();
+my ($width, $height) = (split(/\s+/, $root->getAttribute('viewBox')))[2, 3];
+my $precision =
+    $width > 1000 || $height > 1000 ? 0
+  : $width > 100 || $height > 100 ? 1
+  : $width > 10 || $height > 10 ? 2
+  : 3;
+
+sub round {
+    my ($float) = @_;
+    my $res;
+    if ($float =~ /^(-?\d+)$/ or $precision == 0) {
+        $res = int($float + $float / abs($float * 2 || 1));
+    } else {
+        $res = $float =~ s/^(-?\d+\.\d{$precision}).*/$1/r;
+    }
+    $res = 0 if $res == 0;
+    return "$res";
+}
+
+sub reduce_precision {
+    my ($data) = @_;
+    $data =~ s/(-?\d+\.\d*)/round($1)/ge;
+    return $data;
+}
+
+sub optimize_d {
+    my ($d_attr) = shift;
+    my $d = reduce_precision($d_attr);
+    return $d;
+}
+
+for my $path ($root->findnodes('//*[@d]')) {
+    $path->setAttribute('d', optimize_d($path->getAttribute('d')));
+}
 
 my $s = $doc->toString();
 $s =~ s/\t+/ /g;
