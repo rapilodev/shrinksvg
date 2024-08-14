@@ -44,9 +44,54 @@ sub convert_polygon_to_path {
     return $d;
 }
 
+sub simplify_path_data {
+    my ($d) = @_;
+    my @commands = split(/(?=[MLHVZmlhvzC])/, $d);    #cSsQqTtAa
+    my $result = '';
+    my ($last_x, $last_y) = (0, 0);
+    for my $cmd (@commands) {
+        if ($cmd =~ /^M(-?\d+\.?\d*),(-?\d+\.?\d*)/) {
+            ($last_x, $last_y) = ($1, $2);
+            $result .= "M$last_x,$last_y";
+        } elsif ($cmd =~ /^L(-?\d+\.?\d*),(-?\d+\.?\d*)/) {
+            my ($x, $y) = ($1, $2);
+            if ($x == $last_x && $y == $last_y) {
+            } elsif ($x == $last_x) {
+                $result .= "V$y";
+            } elsif ($y == $last_y) {
+                $result .= "H$x";
+            } else {
+                $result .= "L$x,$y";
+            }
+            ($last_x, $last_y) = ($x, $y);
+        } elsif ($cmd =~ /^H(-?\d+\.?\d*)/) {
+            my $x = $1;
+            $result .= "H$x";
+            $last_x = $x;
+        } elsif ($cmd =~ /^V(-?\d+\.?\d*)/) {
+            my $y = $1;
+            $result .= "V$y";
+            $last_y = $y;
+        } elsif ($cmd =~ /^Z/) {
+            $result .= "Z";
+        } else {
+            $result .= $cmd;
+        }
+    }
+    return $result;
+}
+
 sub optimize_d {
     my ($d_attr) = shift;
     my $d = reduce_precision($d_attr);
+    while (1) {
+        my $new = simplify_path_data($d);
+        if (length($new) < length($d)) {
+            $d = $new;
+        } else {
+            last;
+        }
+    }
     return $d;
 
 }
