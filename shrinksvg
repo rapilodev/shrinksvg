@@ -81,6 +81,52 @@ sub simplify_path_data {
     return $result;
 }
 
+sub convert_to_relative {
+    my ($d) = @_;
+    my $result = '';
+    my ($last_x, $last_y) = (0, 0);
+    for my $cmd (split(/(?=[MLHVZmlhvzCcSsQqTtAa])/, $d)) {
+        $cmd =~ s/\s+$//g;
+        if ($cmd =~ /^M(-?\d+\.?\d*),(-?\d+\.?\d*)/) {
+            my ($x, $y) = ($1, $2);
+            my $dx = round($x - $last_x);
+            my $dy = round($y - $last_y);
+            $result .= "m$dx,$dy";
+            ($last_x, $last_y) = ($x, $y);
+        } elsif ($cmd =~ /^L(-?\d+\.?\d*),(-?\d+\.?\d*)/) {
+            my ($x, $y) = ($1, $2);
+            my $dx = round($x - $last_x);
+            my $dy = round($y - $last_y);
+            if (($dx == 0) && ($dy == 0)) {
+            } elsif ($dx == 0) {
+                $result .= "v$dy";
+            } elsif ($dy == 0) {
+                $result .= "h$dx";
+            } else {
+                $result .= "l$dx,$dy";
+            }
+            ($last_x, $last_y) = ($x, $y);
+        } elsif ($cmd =~ /^H(-?\d+\.?\d*)/) {
+            my $x = $1;
+            my $dx = round($x - $last_x);
+            $result .= "h$dx";
+            $last_x = $x;
+        } elsif ($cmd =~ /^V(-?\d+\.?\d*)/) {
+            my $y = $1;
+            my $dy = round($y - $last_y);
+            $result .= "v$dy";
+            $last_y = $y;
+        } elsif ($cmd =~ /^[CSQTA].*?(-?\d+\.?\d*),(-?\d+\.?\d*)$/) {
+            my ($x, $y) = ($1, $2);
+            $result .= $cmd;
+            ($last_x, $last_y) = ($x, $y);
+        } else {
+            $result .= $cmd;
+        }
+    }
+    return $result;
+}
+
 sub optimize_d {
     my ($d_attr) = shift;
     my $d = reduce_precision($d_attr);
@@ -92,6 +138,9 @@ sub optimize_d {
             last;
         }
     }
+
+    my $e = convert_to_relative($d);
+    $d = $e if length($e) < length($d);
     return $d;
 
 }
