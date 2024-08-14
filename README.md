@@ -1,2 +1,17 @@
 # shrinksvg
 reduce SVG size
+
+This Perl script optimizes SVG files.
+It minimizes the file size while preserving the visual integrity of the SVG.
+
+## Usage
+
+To use the script, pipe an SVG file into it via standard input and capture the optimized SVG from the output:
+
+```bash
+cat input.svg | ./shrinksvg > output.svg
+
+## Dependencies
+
+- Perl 5
+- XML::LibXML module

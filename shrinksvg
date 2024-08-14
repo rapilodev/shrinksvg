@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use XML::LibXML;
+
+my $input_svg = do {local $/; <STDIN>};
+my $parser = XML::LibXML->new();
+my $doc = $parser->parse_string($input_svg);
+my $root = $doc->documentElement();
+
+my $s = $doc->toString();
+$s =~ s/\t+/ /g;
+$s =~ s/\n+/\n/g;
+$s =~ s/\n<\//<\//g;
+## $s =~ s/\n+/ /g;
+$s =~ s/ +/ /g;
+print $s ;
+
