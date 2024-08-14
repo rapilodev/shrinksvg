@@ -32,14 +32,43 @@ sub reduce_precision {
     return $data;
 }
 
+sub convert_polygon_to_path {
+    my ($points) = @_;
+    my @coords = split(/[\s,]+/, $points);
+    return '' unless @coords;
+    my $d = "M$coords[0],$coords[1]";
+    for (my $i = 2; $i < @coords; $i += 2) {
+        $d .= " L$coords[$i],$coords[$i+1]";
+    }
+    $d .= "Z";
+    return $d;
+}
+
 sub optimize_d {
     my ($d_attr) = shift;
     my $d = reduce_precision($d_attr);
     return $d;
+
+}
+
+for my $polygon ($root->findnodes('//*[name()="polygon"]')) {
+    my $points = $polygon->getAttribute('points');
+    my $path_data = convert_polygon_to_path($points);
+    my $path = $doc->createElement('path');
+    $path->setAttribute('d', $path_data);
+    for my $attr ($polygon->attributes) {
+        next if $attr->name eq 'points';
+        $path->setAttribute($attr->name, $attr->value);
+    }
+    $polygon->replaceNode($path);
 }
 
 for my $path ($root->findnodes('//*[@d]')) {
     $path->setAttribute('d', optimize_d($path->getAttribute('d')));
+}
+
+for my $element ($root->findnodes('//*[@points]')) {
+    $element->setAttribute('d', optimize_d($element->getAttribute('points')));
 }
 
 my $s = $doc->toString();
