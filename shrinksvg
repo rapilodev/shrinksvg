@@ -127,6 +127,32 @@ sub convert_to_relative {
     return $result;
 }
 
+sub aggregate_lv {
+    my ($d) = @_;
+    my $result = '';
+    my $oldcmd = '';
+    my $sum = 0;
+    for my $cmd (split(/(?=[MLHVZmlhvzCcSsQqTtAa])/, $d)) {
+        if ($cmd =~ /^([hv])(-?\d+\.?\d*)/) {
+            my ($dir, $delta) = ($1, $2);
+            if ($dir ne $oldcmd) {
+                $result .= $oldcmd . round($sum) if $oldcmd && $sum;
+                $oldcmd = $dir;
+                $sum = $delta;
+            } else {
+                $sum += $delta;
+            }
+        } else {
+            $result .= $oldcmd . round($sum) if $oldcmd && $sum;
+            $oldcmd = '';
+            $sum = 0;
+            $result .= $cmd;
+        }
+    }
+    $result .= $oldcmd . round($sum) if $oldcmd && $sum;
+    return $result;
+}
+
 sub optimize_d {
     my ($d_attr) = shift;
     my $d = reduce_precision($d_attr);
@@ -140,6 +166,7 @@ sub optimize_d {
     }
 
     my $e = convert_to_relative($d);
+    $e = aggregate_lv($e);
     $d = $e if length($e) < length($d);
     return $d;
 
